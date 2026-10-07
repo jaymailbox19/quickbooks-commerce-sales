@@ -1,0 +1,14 @@
+{
+  "feature_columns": [
+    "sales_lag_1",
+    "sales_lag_2",
+    "sales_lag_3",
+    "sales_lag_4",
+    "rolling_avg_4",
+    "growth_rate",
+    "week_of_year",
+    "category_Clothing",
+    "category_Electronics",
+    "category_Home"
+  ]
+}

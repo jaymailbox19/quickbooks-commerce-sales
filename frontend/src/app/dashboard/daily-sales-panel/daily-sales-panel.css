@@ -1,0 +1,47 @@
+:host {
+  display: block;
+}
+
+.daily-sales-panel {
+  margin-top: 24px;
+  padding: 20px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.daily-sales-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.daily-sales-header h3 {
+  margin: 0;
+  color: #1e293b;
+  font-size: 18px;
+}
+
+.daily-sales-header button {
+  flex-shrink: 0;
+  min-height: 42px;
+  padding: 10px 18px;
+  border: 0;
+  border-radius: 8px;
+  background: #2563eb;
+  color: #ffffff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.daily-sales-header button:hover {
+  background: #1d4ed8;
+}
+
+.daily-sales-grid {
+  display: block;
+  width: 100%;
+  min-height: 150px;
+}

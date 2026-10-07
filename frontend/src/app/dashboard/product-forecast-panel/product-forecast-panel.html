@@ -1,0 +1,36 @@
+<section class="dashboard-card product-forecast">
+  <div class="panel-header">
+    <div>
+      <h2>Product Sales Forecast</h2>
+
+      <p>
+        Forecast allocation for
+        <strong>{{ category }}</strong>
+        based on historical product contribution.
+      </p>
+
+      <p class="forecast-total">
+        Category Forecast:
+        <strong>{{ predictedSales | currency:'USD':'symbol':'1.0-0' }}</strong>
+      </p>
+    </div>
+  </div>
+
+  @if (products.length > 0) {
+    <ag-grid-angular
+      class="product-forecast-grid"
+      [theme]="themeAlpine"
+      [rowData]="products"
+      [columnDefs]="columnDefs"
+      [defaultColDef]="defaultColDef"
+      domLayout="autoHeight">
+    </ag-grid-angular>
+  } @else {
+    <div class="no-results">
+      <h3>No product forecast available</h3>
+      <p>
+        Product-level forecast allocation is not available for this category.
+      </p>
+    </div>
+  }
+</section>

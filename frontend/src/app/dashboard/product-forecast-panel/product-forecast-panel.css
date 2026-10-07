@@ -1,0 +1,52 @@
+.product-forecast {
+  margin-top: 24px;
+}
+
+.panel-header {
+  margin-bottom: 16px;
+}
+
+.panel-header h2 {
+  margin: 0 0 6px;
+  color: #1e293b;
+  font-size: 20px;
+  line-height: 1.35;
+  font-weight: 650;
+}
+
+.panel-header p {
+  margin: 0 0 8px;
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.forecast-total {
+  margin-top: 12px !important;
+  color: #334155 !important;
+}
+
+.forecast-total strong {
+  color: #0f172a;
+  font-size: 18px;
+}
+
+.product-forecast-grid {
+  width: 100%;
+}
+
+.no-results {
+  padding: 20px;
+  text-align: center;
+  color: #64748b;
+}
+
+.no-results h3 {
+  margin: 0 0 8px;
+  color: #475569;
+  font-size: 16px;
+}
+
+.no-results p {
+  margin: 0;
+}

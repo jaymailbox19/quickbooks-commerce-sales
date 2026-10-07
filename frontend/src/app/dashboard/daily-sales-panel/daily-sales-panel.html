@@ -1,0 +1,26 @@
+<div class="daily-sales-panel">
+  <div class="daily-sales-header">
+    <h3>Daily Sales — {{ category }}</h3>
+    <button type="button" (click)="close.emit()">Close</button>
+  </div>
+
+  @if (loading) {
+    <p>Loading daily sales...</p>
+  } @else if (error) {
+    <p>{{ error }}</p>
+  } @else if (sales.length === 0) {
+    <p>No daily sales found for this category and date range.</p>
+  } @else {
+    <ag-grid-angular
+      class="daily-sales-grid"
+      [theme]="theme"
+      [rowData]="sales"
+      [columnDefs]="columnDefs"
+      [defaultColDef]="defaultColDef"
+      [pagination]="true"
+      [paginationPageSize]="10"
+      [paginationPageSizeSelector]="[10, 20, 50]"
+      domLayout="autoHeight">
+    </ag-grid-angular>
+  }
+</div>

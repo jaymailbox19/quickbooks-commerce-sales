@@ -1,0 +1,26 @@
+/* You can add global styles to this file, and also import other style files */
+.no-results {
+  padding: 32px 24px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 12px;
+  background: #f8fafc;
+  text-align: center;
+}
+
+.no-results h3 {
+  margin: 0 0 8px;
+  color: #334155;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.no-results p {
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.panel-error {
+  color: #dc2626;
+}

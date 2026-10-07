@@ -1,0 +1,47 @@
+.top-products {
+  margin-top: 0;
+  min-width: 0;
+}
+
+.panel-header {
+  margin-bottom: 16px;
+}
+
+.panel-header h2 {
+  margin: 0 0 6px;
+}
+
+.panel-header p {
+  margin: 0 0 8px;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.sales-period-subtitle {
+  margin-top: 8px;
+}
+
+.top-products-grid {
+  width: 100%;
+}
+
+.panel-error {
+  color: #dc2626;
+}
+.dashboard-card {
+  min-width: 0;
+  padding: 24px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  box-shadow: 0 3px 10px rgba(15, 23, 42, 0.04);
+}
+
+.dashboard-card h2 {
+  margin: 0 0 18px;
+  color: #1e293b;
+  font-size: 20px;
+  line-height: 1.35;
+  font-weight: 650;
+}
+

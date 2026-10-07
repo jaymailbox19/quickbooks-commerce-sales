@@ -1,0 +1,38 @@
+<section class="dashboard-card top-products">
+  <div class="panel-header">
+    <div>
+      <h2>Top-Selling Products</h2>
+      <p>Products ranked by total sales amount for the selected date range.</p>
+
+      <p class="sales-period-subtitle">
+        @if (startDate && endDate) {
+          Sales from {{ startDate | date:'mediumDate' }}
+          – {{ endDate | date:'mediumDate' }}
+        }
+      </p>
+    </div>
+  </div>
+
+  @if (loading) {
+    <p>Loading top-selling products...</p>
+  } @else if (error) {
+    <p class="panel-error">{{ error }}</p>
+  } @else if (products.length > 0) {
+    <ag-grid-angular
+      class="top-products-grid"
+      [theme]="themeAlpine"
+      [rowData]="products"
+      [columnDefs]="columnDefs"
+      [defaultColDef]="defaultColDef"
+      [pagination]="true"
+      [paginationPageSize]="5"
+      [paginationPageSizeSelector]="[5, 10, 20]"
+      domLayout="autoHeight">
+    </ag-grid-angular>
+  } @else {
+    <div class="no-results">
+        <h3>No product sales found</h3>
+        <p>No product sales found for the selected date range.</p>
+    </div>
+  }
+</section>

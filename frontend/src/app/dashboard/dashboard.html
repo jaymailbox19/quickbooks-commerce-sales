@@ -1,0 +1,386 @@
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">QB</div>
+      <div>
+        <div class="brand-name">QuickBooks</div>
+        <div class="brand-subtitle">Commerce Analytics</div>
+      </div>
+    </div>
+
+    <nav class="side-nav" aria-label="Main navigation">
+      @for (item of navItems; track item.id) {
+        <button
+          type="button"
+          class="nav-item"
+          [class.active]="activeSection() === item.id"
+          (click)="selectSection(item.id)">
+          <span class="nav-icon" aria-hidden="true">
+            @switch (item.id) {
+              @case ('overview') {
+                <svg lucideLayoutDashboard [size]="18" [strokeWidth]="1.9"></svg>
+              }
+               @case ('forecast') {
+                <svg lucideTrendingUp [size]="18" [strokeWidth]="1.9"></svg>
+              }
+              @case ('sales') {
+                <svg lucideShoppingCart [size]="18" [strokeWidth]="1.9"></svg>
+              }
+              @case ('products') {
+                <svg lucidePackage [size]="18" [strokeWidth]="1.9"></svg>
+              }
+              @case ('analytics') {
+                <svg lucideBarChart3 [size]="18" [strokeWidth]="1.9"></svg>
+              }
+            }
+          </span>
+          <span>{{ item.label }}</span>
+        </button>
+      }
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="service-status">
+        <span class="status-dot"></span>
+        <div>
+          <strong>Services operational</strong>
+          <span>Sales & Forecasting</span>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main-shell">
+    <header class="topbar">
+      <div class="breadcrumb">Commerce / {{ sectionTitle() }}</div>
+
+      <div class="user-actions">
+        <div class="user-profile">
+          <span class="user-avatar">
+            <svg lucideUserRound [size]="18" [strokeWidth]="1.8"></svg>
+          </span>
+          <div>
+            <strong>{{ loggedInUsername }}</strong>
+            <span>Commerce User</span>
+          </div>
+        </div>
+
+        <button class="logout-button" type="button" (click)="logout()">
+          <svg lucideLogOut [size]="17" [strokeWidth]="1.8"></svg>
+          <span>Logout</span>
+        </button>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <div class="page-heading">
+        <div>
+          <div class="eyebrow">{{ activeSection() === 'overview' ? 'EXECUTIVE VIEW' : sectionTitle().toUpperCase() }}</div>
+          <h1>{{ sectionTitle() }}</h1>
+          <p>{{ sectionSubtitle() }}</p>
+        </div>
+
+        @if (activeSection() === 'overview') {
+          <button type="button" class="primary-button" (click)="selectSection('forecast')">
+            Open Forecast
+          </button>
+        }
+      </div>
+
+      @if (activeSection() === 'overview') {
+        <section class="data-context-banner overview-filter-card" aria-label="Overview date range">
+          <span class="context-icon" aria-hidden="true">
+            <svg lucideBarChart3 [size]="18" [strokeWidth]="1.9"></svg>
+          </span>
+          <div class="context-copy overview-filter-copy">
+            <strong>Overview date range</strong>
+            <span>Only the Overview uses this date range. Changing Sales or Products filters will not change these results.</span>
+          </div>
+          <div class="overview-filter-fields">
+            <label><span>Start</span><input type="date" [(ngModel)]="overviewStartDate"></label>
+            <span class="range-arrow">→</span>
+            <label><span>End</span><input type="date" [(ngModel)]="overviewEndDate"></label>
+            <button type="button" class="context-action-button" (click)="loadOverviewData()" [disabled]="overviewLoading()">
+              {{ overviewLoading() ? 'Loading...' : 'Apply' }}
+            </button>
+          </div>
+        </section>
+      }
+
+      @if (activeSection() === 'overview') {
+        <section class="kpi-grid">
+          <article class="kpi-card">
+            <span>Total Sales</span>
+            <strong>{{ totalSales() | currency:'USD':'symbol':'1.0-0' }}</strong>
+            <small>Overview date range</small>
+          </article>
+
+          <article class="kpi-card">
+            <span>Top Category</span>
+            <strong>{{ topSellingCategory()?.category || '—' }}</strong>
+            <small>{{ topSellingCategory()?.totalSales || 0 | currency:'USD':'symbol':'1.0-0' }}</small>
+          </article>
+
+          <article class="kpi-card">
+            <span>Categories</span>
+            <strong>{{ overviewSales().length }}</strong>
+            <small>With sales in Overview range</small>
+          </article>
+
+          <article class="kpi-card accent">
+            <span>Next Forecast</span>
+            @if (forecast(); as result) {
+              <strong>{{ result.predictedSales | currency:'USD':'symbol':'1.0-0' }}</strong>
+              <small>{{ result.category }} · {{ selectedPeriod === 'WEEK' ? 'Next week' : selectedPeriod === 'MONTH' ? 'Next month' : 'Next year' }}</small>
+            } @else {
+              <strong>—</strong>
+              <small>Forecast not available</small>
+            }
+          </article>
+        </section>
+
+        <div class="overview-grid">
+          <section class="content-card">
+            <div class="card-heading">
+              <div>
+                <div class="eyebrow">SALES PERFORMANCE</div>
+                <h2>Sales by Category</h2>
+                <p class="date-range-text">
+                  @if (overviewStartDate && overviewEndDate) {
+                    Sales from {{ overviewStartDate | date:'mediumDate' }} – {{ overviewEndDate | date:'mediumDate' }}
+                  } @else {
+                    Sales date range not selected
+                  }
+                </p>
+              </div>
+              <button type="button" class="text-link" (click)="selectSection('sales')">View Sales →</button>
+            </div>
+
+            @if (overviewLoading()) {
+              <p class="status-text">Loading sales...</p>
+            } @else if (overviewError()) {
+              <p class="error-text">{{ overviewError() }}</p>
+            } @else if (overviewSales().length > 0) {
+              <div class="category-list">
+                @for (item of overviewSales(); track item.category) {
+                  <button type="button" class="category-row" (click)="openDailySales(item.category, overviewStartDate, overviewEndDate)">
+                    <span class="category-name">
+                      <span class="category-dot"></span>
+                      {{ item.category }}
+                    </span>
+                    <strong>{{ item.totalSales | currency:'USD':'symbol':'1.0-0' }}</strong>
+                  </button>
+                }
+              </div>
+            } @else {
+              <p class="status-text">No sales found for the Sales date range.</p>
+            }
+          </section>
+
+          <section class="content-card">
+            <div class="card-heading">
+              <div>
+                <div class="eyebrow">PRODUCTS</div>
+                <h2>Top-Selling Products</h2>
+                <p>Historical product sales ranked by total sales amount for the Overview date range.</p>
+              </div>
+              <button type="button" class="text-link" (click)="selectSection('products')">View Products →</button>
+            </div>
+
+            @if (overviewTopProductsLoading()) {
+              <p class="status-text">Loading products...</p>
+            } @else if (overviewTopProductsError()) {
+              <p class="error-text">{{ overviewTopProductsError() }}</p>
+            } @else if (overviewProducts().length > 0) {
+              <div class="product-summary">
+                @for (product of overviewProducts(); track product.productId) {
+                  <div class="product-row">
+                    <span class="product-rank">{{ product.rank || $index + 1 }}</span>
+                    <div class="product-info">
+                      <strong>{{ product.productName }}</strong>
+                      <span>{{ product.categoryName }}</span>
+                    </div>
+                    <strong>{{ product.totalSales | currency:'USD':'symbol':'1.0-0' }}</strong>
+                  </div>
+                }
+              </div>
+            } @else {
+              <p class="status-text">No products found for the Overview date range.</p>
+            }
+          </section>
+        </div>
+      }
+
+      @if (activeSection() === 'sales') {
+        <section class="content-card">
+          <div class="card-heading">
+            <div>
+              <div class="eyebrow">HISTORICAL ANALYTICS</div>
+              <h2>Sales performance</h2>
+              <p>Select a category and date range to analyze sales.</p>
+            </div>
+          </div>
+
+          <div class="filter-bar">
+            <label>
+              <span>Category</span>
+              <select [ngModel]="salesSearchCategory()" (ngModelChange)="salesSearchCategory.set($event); loadSalesByDateRange()">
+                <option value="ALL">All Categories</option>
+                @for (category of categoryOptions; track category) {
+                  <option [value]="category">{{ category }}</option>
+                }
+              </select>
+            </label>
+
+            <label>
+              <span>Start date</span>
+              <input type="date" [(ngModel)]="salesStartDate">
+            </label>
+
+            <label>
+              <span>End date</span>
+              <input type="date" [(ngModel)]="salesEndDate">
+            </label>
+
+            <button type="button" class="primary-button filter-button" (click)="loadSalesByDateRange()" [disabled]="loading()">
+              {{ loading() ? 'Loading...' : 'Apply Filters' }}
+            </button>
+          </div>
+
+          <div class="sales-summary-grid">
+            @for (item of filteredSales(); track item.category) {
+              <button type="button" class="sales-summary-card" (click)="openDailySales(item.category, salesStartDate, salesEndDate)">
+                <span>{{ item.category }}</span>
+                <strong>{{ item.totalSales | currency:'USD':'symbol':'1.0-0' }}</strong>
+                <small>View daily sales →</small>
+              </button>
+            }
+          </div>
+        </section>
+
+        @if (showDailySales()) {
+          <app-daily-sales-panel
+            [category]="selectedDailyCategory()"
+            [sales]="dailySales()"
+            [loading]="dailySalesLoading()"
+            [error]="dailySalesError()"
+            [theme]="themeAlpine"
+            [columnDefs]="dailySalesColumnDefs"
+            [defaultColDef]="defaultColDef"
+            (close)="closeDailySales()">
+          </app-daily-sales-panel>
+        }
+      }
+
+      @if (activeSection() === 'products') {
+        <section class="content-card full-height-card">
+          <div class="card-heading">
+            <div>
+              <div class="eyebrow">PRODUCT PERFORMANCE</div>
+              <h2>Top-Selling Products</h2>
+              <p>Historical product sales ranked by total sales amount for the Products date range.</p>
+            </div>
+          </div>
+
+          <div class="filter-bar compact">
+            <label>
+              <span>Category</span>
+              <select [ngModel]="productsSearchCategory()" (ngModelChange)="productsSearchCategory.set($event); loadTopProducts()">
+                <option value="ALL">All Categories</option>
+                @for (category of categoryOptions; track category) {
+                  <option [value]="category">{{ category }}</option>
+                }
+              </select>
+            </label>
+            <label>
+              <span>Start date</span>
+              <input type="date" [(ngModel)]="productsStartDate">
+            </label>
+            <label>
+              <span>End date</span>
+              <input type="date" [(ngModel)]="productsEndDate">
+            </label>
+            <button type="button" class="primary-button filter-button" (click)="loadTopProducts()" [disabled]="topProductsLoading()">
+              {{ topProductsLoading() ? 'Loading...' : 'Apply Filters' }}
+            </button>
+          </div>
+
+          <app-top-products-panel
+            [products]="topProducts()"
+            [loading]="topProductsLoading()"
+            [error]="topProductsError()"
+            [startDate]="productsStartDate"
+            [endDate]="productsEndDate">
+          </app-top-products-panel>
+        </section>
+      }
+
+      @if (activeSection() === 'forecast') {
+        <app-forecast-panel
+          [categoryOptions]="categoryOptions"
+          [selectedCategory]="selectedCategory"
+          [selectedPeriod]="selectedPeriod"
+          [loading]="forecastLoading()"
+          [error]="forecastError()"
+          [forecast]="forecast()"
+          (categoryChange)="selectedCategory = $event; clearForecast()"
+          (periodChange)="selectedPeriod = $event; clearForecast()"
+          (forecastRequested)="loadForecast()">
+        </app-forecast-panel>
+      }
+
+      @if (activeSection() === 'analytics') {
+        <section class="content-card">
+          <div class="card-heading">
+            <div>
+              <div class="eyebrow">MODEL EVALUATION</div>
+              <h2>Model Comparison</h2>
+              <p>Compare forecasting approaches using historical backtesting and MAE.</p>
+            </div>
+            <button type="button" class="primary-button" (click)="loadComparison()" [disabled]="comparisonLoading()">
+              {{ comparisonLoading() ? 'Loading...' : 'Refresh Comparison' }}
+            </button>
+          </div>
+
+          @if (comparisonError()) {
+            <p class="error-text">{{ comparisonError() }}</p>
+          }
+
+          @if (comparison().length > 0) {
+            <div class="metric-grid">
+              <div class="metric-card">
+                <span>Historical Trend MAE</span>
+                <strong>{{ movingAverageMae() | currency:'USD':'symbol':'1.2-2' }}</strong>
+              </div>
+              <div class="metric-card">
+                <span>AI-Powered Forecast MAE</span>
+                <strong>{{ xgboostMae() | currency:'USD':'symbol':'1.2-2' }}</strong>
+              </div>
+              <div class="metric-card">
+                <span>Absolute MAE Difference</span>
+                <strong>{{ maeDifference() | currency:'USD':'symbol':'1.2-2' }}</strong>
+              </div>
+            </div>
+
+            <div class="grid-wrapper">
+              <ag-grid-angular
+                class="comparison-grid"
+                [theme]="themeAlpine"
+                [rowData]="comparison()"
+                [columnDefs]="columnDefs"
+                [defaultColDef]="defaultColDef"
+                [pagination]="true"
+                [paginationPageSize]="paginationPageSize"
+                [paginationPageSizeSelector]="paginationPageSizeSelector"
+                [tooltipShowDelay]="300"
+                domLayout="autoHeight">
+              </ag-grid-angular>
+            </div>
+          } @else if (!comparisonLoading() && !comparisonError()) {
+            <p class="status-text">Click Refresh Comparison to load model evaluation results.</p>
+          }
+        </section>
+      }
+    </main>
+  </div>
+</div>

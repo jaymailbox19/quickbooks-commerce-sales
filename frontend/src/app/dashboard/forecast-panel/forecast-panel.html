@@ -1,0 +1,138 @@
+<section class="dashboard-card forecast">
+  <div class="forecast-header">
+    <div>
+      <div class="eyebrow">PREDICTIVE ANALYTICS</div>
+      <h2>Sales Forecast</h2>
+      <p class="forecast-subtitle">
+        Forecast category sales and see how the estimate is allocated across products.
+      </p>
+    </div>
+  </div>
+
+  <div class="forecast-filters" aria-label="Forecast settings">
+    <div class="filter-field">
+      <label for="forecast-category">Category</label>
+      <select
+        id="forecast-category"
+        [ngModel]="selectedCategory"
+        (ngModelChange)="categoryChange.emit($event)">
+        @for (category of categoryOptions; track category) {
+          <option [value]="category">{{ category }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="filter-field">
+      <label for="forecast-period">Forecast horizon</label>
+      <select
+        id="forecast-period"
+        [ngModel]="selectedPeriod"
+        (ngModelChange)="periodChange.emit($event)">
+        <option value="WEEK">1 week</option>
+        <option value="MONTH">4 weeks</option>
+        <option value="YEAR">52 weeks</option>
+      </select>
+    </div>
+
+    <button
+      type="button"
+      class="forecast-action"
+      (click)="forecastRequested.emit()"
+      [disabled]="loading">
+      {{ loading ? 'Generating...' : 'Generate Forecast' }}
+    </button>
+  </div>
+
+  @if (loading) {
+    <div class="forecast-status loading-state">
+      <span class="status-spinner" aria-hidden="true"></span>
+      <div>
+        <strong>Generating forecast</strong>
+        <p>Analyzing historical sales patterns...</p>
+      </div>
+    </div>
+  }
+
+  @if (error) {
+    <div class="forecast-status error-state" role="alert">
+      <strong>Forecast unavailable</strong>
+      <p>{{ error }}</p>
+    </div>
+  }
+
+  @if (forecast; as result) {
+    <div class="forecast-workspace">
+      <section class="forecast-summary-card">
+        <div class="forecast-kpi-row">
+          <div>
+            <div class="result-label">EXPECTED SALES</div>
+            <div class="forecast-category">{{ result.category }}</div>
+            <div class="result-amount">
+              {{ result.predictedSales | currency:'USD':'symbol':'1.0-0' }}
+            </div>
+            <p class="result-period">
+              {{ selectedPeriod === 'WEEK' ? 'Forecast horizon: 1 week' :
+                 selectedPeriod === 'MONTH' ? 'Forecast horizon: 4 weeks' :
+                 'Forecast horizon: 52 weeks' }}
+            </p>
+          </div>
+
+          <div class="forecast-meta">
+            <span class="horizon-badge">
+              {{ selectedPeriod === 'WEEK' ? '1-week outlook' :
+                 selectedPeriod === 'MONTH' ? '4-week outlook' :
+                 '52-week outlook' }}
+            </span>
+
+            @if (result.historicalThroughDate) {
+              <span class="historical-date">
+                Historical data through
+                <strong>{{ result.historicalThroughDate | date:'MMM d, yyyy' }}</strong>
+              </span>
+            }
+          </div>
+        </div>
+      </section>
+
+      <aside class="forecast-products">
+        <app-product-forecast-panel
+          [products]="result.productForecasts"
+          [category]="result.category"
+          [predictedSales]="result.predictedSales">
+        </app-product-forecast-panel>
+      </aside>
+    </div>
+
+    <section class="chart-section chart-full-width">
+      <div class="chart-header">
+        <div>
+          <h3>Sales trend</h3>
+          <p>Historical actuals compared with the forecast period.</p>
+        </div>
+      </div>
+
+      @if (result.weeklyPredictions.length) {
+        <div class="forecast-chart">
+          <canvas
+            baseChart
+            [type]="forecastChartType"
+            [data]="forecastChartData"
+            [options]="forecastChartOptions">
+          </canvas>
+        </div>
+      } @else {
+        <div class="empty-chart">
+          No forecast trend data is available.
+        </div>
+      }
+    </section>
+
+    <div class="forecast-note">
+      <span class="note-icon" aria-hidden="true">i</span>
+      <span>
+        The category forecast is generated from historical sales patterns.
+        Product amounts are allocated using historical product contribution within the category.
+      </span>
+    </div>
+  }
+</section>
