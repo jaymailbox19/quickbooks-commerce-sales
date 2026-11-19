@@ -1,39 +1,69 @@
 package com.quickbooks.sales.controller;
 
 import com.quickbooks.sales.dto.LoginRequest;
-import com.quickbooks.sales.security.JwtService;
-import org.springframework.beans.factory.annotation.Value;
+import com.quickbooks.sales.dto.SelectWorkspaceRequest;
+import com.quickbooks.sales.dto.WorkspaceResponse;
+import com.quickbooks.sales.service.AuthenticationService;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
-
+import java.util.List;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
+    private final AuthenticationService authenticationService;
 
-    private final JwtService jwtService;
-
-    @Value("${app.demo.username}")
-    private String demoUsername;
-
-    @Value("${app.demo.password}")
-    private String demoPassword;
-
-    public AuthController(JwtService jwtService) {
-        this.jwtService = jwtService;
+    public AuthController(AuthenticationService authenticationService) {
+        this.authenticationService = authenticationService;
     }
 
     @PostMapping("/login")
-    public Map<String, String> login(@RequestBody LoginRequest request) {
-        if (!demoUsername.equals(request.username())
-                || !demoPassword.equals(request.password())) {
-            throw new org.springframework.web.server.ResponseStatusException(
-                    org.springframework.http.HttpStatus.UNAUTHORIZED,
-                    "Invalid username or password"
+    public AuthenticationService.LoginResult login(
+            @Valid @RequestBody LoginRequest request) {
+        return authenticationService.login(request);
+    }
+
+    @GetMapping("/workspaces")
+    public List<WorkspaceResponse> workspaces(
+            @AuthenticationPrincipal Jwt jwt) {
+        requireSelectionToken(jwt);
+        return authenticationService.getWorkspaces(userId(jwt));
+    }
+
+    @PostMapping("/workspaces/select")
+    public Map<String, String> selectWorkspace(
+            @AuthenticationPrincipal Jwt jwt,
+            @Valid @RequestBody SelectWorkspaceRequest request) {
+        requireSelectionToken(jwt);
+        String token = authenticationService.selectWorkspace(
+                userId(jwt), request.tenantId());
+        return Map.of("token", token);
+    }
+
+    private void requireSelectionToken(Jwt jwt) {
+        if (jwt == null || !"workspace_selection".equals(
+                jwt.getClaimAsString("token_type"))) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "A workspace-selection token is required"
             );
         }
+    }
 
-        return Map.of("token", jwtService.generateToken(request.username()));
+    private Long userId(Jwt jwt) {
+        try {
+            return Long.valueOf(jwt.getSubject());
+        } catch (NumberFormatException ex) {
+            throw new ResponseStatusException(
+                    HttpStatus.UNAUTHORIZED,
+                    "Invalid user identity in token"
+            );
+        }
     }
 }
