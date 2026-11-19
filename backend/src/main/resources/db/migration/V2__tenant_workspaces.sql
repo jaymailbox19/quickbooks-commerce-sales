@@ -16,7 +16,7 @@ ON CONFLICT (name) DO NOTHING;
 
 -- Earlier prototype scripts created tenants.id and sales.tenant_id as INTEGER.
 -- Normalize both to BIGINT before creating membership and composite references.
-DO $
+DO $csfp$
 DECLARE
     fk_name TEXT;
     tenant_sequence REGCLASS;
@@ -38,7 +38,7 @@ BEGIN
     IF tenant_sequence IS NOT NULL THEN
         EXECUTE format('ALTER SEQUENCE %s AS BIGINT', tenant_sequence);
     END IF;
-END $;
+END $csfp$;
 
 CREATE TABLE IF NOT EXISTS app_users (
     id BIGSERIAL PRIMARY KEY,
@@ -144,7 +144,7 @@ BEGIN
     END IF;
 END $$;
 
-DO $
+DO $csfp$
 BEGIN
     IF NOT EXISTS (
         SELECT 1 FROM pg_constraint
@@ -173,7 +173,7 @@ BEGIN
             ADD CONSTRAINT fk_sales_tenant
             FOREIGN KEY (tenant_id) REFERENCES tenants(id);
     END IF;
-END $;
+END $csfp$;
 
 CREATE INDEX IF NOT EXISTS idx_categories_tenant ON categories (tenant_id);
 CREATE INDEX IF NOT EXISTS idx_products_tenant ON products (tenant_id);
