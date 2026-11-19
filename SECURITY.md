@@ -9,16 +9,12 @@
 
 ## Multi-business tenancy status
 
-The active branch now contains:
-- explicit user, tenant, and membership entities;
-- password-hash-based login and short-lived workspace-selection tokens;
-- membership validation before issuing an active-workspace token;
-- tenant context derived from the authenticated JWT in sales and prediction controllers;
-- tenant-scoped sales repository queries and a tenant/workspace schema migration;
-- an opt-in first-owner bootstrap that hashes the configured password with BCrypt.
+The hardening branch contains membership-based authentication, workspace selection, JWT-derived tenant context, tenant-scoped sales and forecast repository paths, Flyway schema migrations, and an opt-in BCrypt first-owner bootstrap.
 
-The first-owner bootstrap is disabled by default. Enable it only in a controlled initial setup after the tenant schema and configured tenant exist. It creates an OWNER only when the application user table is empty; it does not reset or elevate an existing account. Supply the email and password through deployment environment variables, never source control.
+Database migrations are managed by Flyway. Hibernate validates mappings and does not mutate the schema. Existing databases are baselined at version 1 before Flyway applies the tenant migration at version 2. Always back up and rehearse this migration against a disposable database.
 
-**Not production-ready yet:** no application build or integration tests have been executed as part of this code review. The SQL migration is not wired to an automated migration runner, and the current checked-in XGBoost model remains shared across tenants. Role-based authorization for write operations, membership-revocation behavior, model/training isolation policy, and end-to-end cross-tenant tests remain open. Back up and test the migration against a disposable database before applying it.
+The first-owner bootstrap is disabled by default. Enable it only for controlled initial provisioning after Flyway has created the tenant schema and the configured tenant exists. It creates an OWNER only when the user table is empty; it does not reset or elevate an existing account. Supply credentials through deployment environment variables, never source control.
 
-See [docs/MULTI_TENANCY.md](docs/MULTI_TENANCY.md) for the target architecture and acceptance criteria.
+Not production-ready yet: no application build or integration tests have been executed as part of this code review. Role-based authorization for write operations, membership-revocation behavior, model/training isolation policy, and end-to-end cross-tenant tests remain open. The checked-in XGBoost artifact is shared across tenants.
+
+See docs/MULTI_TENANCY.md for architecture, migration, and validation details.
