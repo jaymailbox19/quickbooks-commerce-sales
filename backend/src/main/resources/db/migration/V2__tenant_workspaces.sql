@@ -1,7 +1,7 @@
 -- CSFP tenant/workspace foundation.
 -- Run only after taking a database backup. This migration preserves existing
 -- catalog and sales rows by assigning them to the existing Demo Tenant.
--- Application-level authorization is a separate required implementation step.
+-- Application authorization is implemented in the API path; cross-tenant integration tests remain required.
 
 CREATE TABLE IF NOT EXISTS tenants (
     id BIGSERIAL PRIMARY KEY,
