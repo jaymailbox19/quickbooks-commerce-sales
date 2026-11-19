@@ -1,58 +1,45 @@
-# QuickBooks Commerce Sales & Forecast
+# Commerce Sales Forecasting Platform
 
-## Project Overview
+An independent commerce analytics and category-level sales forecasting prototype.
 
-A sales analytics and forecasting demo that helps users explore historical sales performance, identify top-selling products, and forecast future sales by category.
+## Overview
 
-## Key Features
+The platform combines historical sales analytics with category-level forecasts. It is intended as a research and engineering prototype for evaluating a modular forecasting workflow.
 
-* Sales by category with selectable date ranges
-* Daily sales drilldown by category
-* Top-selling products ranked by historical sales amount
-* Category-level sales forecasting for the next week, month, or year
-* Forecast model comparison and backtesting using Mean Absolute Error (MAE)
-* Interactive Angular dashboard
+## Features
 
-## Technology Stack
+- Sales aggregation by category and selectable date ranges
+- Daily sales drill-down
+- Historical top-product rankings
+- Category-level forecasts for weekly, monthly, and yearly horizons
+- XGBoost forecasting with a four-week moving-average baseline and service-unavailability fallback
+- Model comparison and historical backtesting endpoints
+- Angular dashboard and REST API
+- Separate Python inference and model-training service
 
-* **Frontend:** Angular, AG Grid, Chart.js
-* **Backend:** Java, Spring Boot
-* **Database:** PostgreSQL
-* **Forecasting:** Python, FastAPI, XGBoost
-* **API Documentation:** Swagger / OpenAPI
+## Architecture
 
-## Service Quality
+- **Frontend:** Angular
+- **Application API:** Java and Spring Boot
+- **Database:** PostgreSQL
+- **ML service:** Python and FastAPI
+- **Forecast model:** XGBoost
+- **API documentation:** Swagger / OpenAPI
 
-### High Availability
+The browser calls the Spring Boot API. The backend aggregates historical sales and calls the Python ML service for inference. The Python service also contains the model-training and refresh workflow.
 
-The demo separates the frontend, backend API, database, and forecasting service into distinct components.
+## Research status and limitations
 
-For a production deployment, availability could be improved through multiple backend instances, load balancing, health checks, service monitoring, and database backup and recovery.
+This repository is an independent prototype. It is not a product of, affiliated with, sponsored by, or endorsed by Intuit or any other commerce software vendor.
 
-These production capabilities are design considerations and are not claimed as implemented in the local demo.
+The checked-in sample data is demonstration data and is not sufficient to support generalizable claims about forecasting accuracy. Model performance should be reported only after reproducible, chronological evaluation on a sufficiently large and documented dataset.
 
-### Forecast Accuracy
+Multi-tenant authorization, credential management, and rolling-origin evaluation are under active review. Do not deploy this prototype with real customer data until these controls have been implemented and independently tested.
 
-The application supports model comparison and backtesting using Mean Absolute Error (MAE).
+## Local development
 
-MAE measures the average absolute difference between predicted and actual values. Comparing models on historical data helps evaluate their forecasting performance. Results should be interpreted in the context of the data and evaluation period; they do not guarantee future accuracy.
+See the backend, frontend, and ML-service directories for component-specific setup. Store secrets in environment variables or a secrets manager. Do not commit environment files, credentials, access tokens, or production data.
 
-### Data Consistency
+## License
 
-The dashboard uses the selected date range and category when retrieving sales data.
-
-* Sales by Category and Top-Selling Products refresh based on the selected filters.
-* Top-Selling Products ranks historical sales by total sales amount.
-* Forecast and model comparison results can be cleared or refreshed when the date range changes, avoiding the display of results calculated for an earlier selection.
-
-## Forecasting Scope
-
-The current forecasting feature predicts future sales at the **category level**.
-
-Top-Selling Products shows **historical product rankings** for the selected date range. It does not currently forecast future sales for individual products.
-
-## Running the Demo
-
-The application is designed to run locally with separate frontend, backend, database, and ML services.
-
-Refer to the project configuration and service-specific setup instructions for local startup details.
+No license is currently granted by this repository. All rights reserved unless and until an explicit license is added.
