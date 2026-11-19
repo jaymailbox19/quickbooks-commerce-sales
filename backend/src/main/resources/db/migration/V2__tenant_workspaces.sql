@@ -14,6 +14,32 @@ INSERT INTO tenants (name)
 VALUES ('Demo Tenant')
 ON CONFLICT (name) DO NOTHING;
 
+-- Earlier prototype scripts created tenants.id and sales.tenant_id as INTEGER.
+-- Normalize both to BIGINT before creating membership and composite references.
+DO $
+DECLARE
+    fk_name TEXT;
+    tenant_sequence REGCLASS;
+BEGIN
+    FOR fk_name IN
+        SELECT conname
+        FROM pg_constraint
+        WHERE conrelid = 'sales'::regclass
+          AND confrelid = 'tenants'::regclass
+          AND contype = 'f'
+    LOOP
+        EXECUTE format('ALTER TABLE sales DROP CONSTRAINT %I', fk_name);
+    END LOOP;
+
+    ALTER TABLE tenants
+        ALTER COLUMN id TYPE BIGINT USING id::BIGINT;
+
+    tenant_sequence := pg_get_serial_sequence('tenants', 'id')::REGCLASS;
+    IF tenant_sequence IS NOT NULL THEN
+        EXECUTE format('ALTER SEQUENCE %s AS BIGINT', tenant_sequence);
+    END IF;
+END $;
+
 CREATE TABLE IF NOT EXISTS app_users (
     id BIGSERIAL PRIMARY KEY,
     email VARCHAR(320) NOT NULL,
@@ -36,6 +62,9 @@ CREATE TABLE IF NOT EXISTS tenant_memberships (
 ALTER TABLE categories ADD COLUMN IF NOT EXISTS tenant_id BIGINT;
 ALTER TABLE products ADD COLUMN IF NOT EXISTS tenant_id BIGINT;
 ALTER TABLE sales ADD COLUMN IF NOT EXISTS tenant_id BIGINT;
+
+ALTER TABLE sales
+    ALTER COLUMN tenant_id TYPE BIGINT USING tenant_id::BIGINT;
 
 -- Existing single-business prototype data is retained under Demo Tenant.
 UPDATE categories
@@ -114,6 +143,37 @@ BEGIN
             REFERENCES products (tenant_id, id);
     END IF;
 END $$;
+
+DO $
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conrelid = 'categories'::regclass
+          AND conname = 'fk_categories_tenant'
+    ) THEN
+        ALTER TABLE categories
+            ADD CONSTRAINT fk_categories_tenant
+            FOREIGN KEY (tenant_id) REFERENCES tenants(id);
+    END IF;
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conrelid = 'products'::regclass
+          AND conname = 'fk_products_tenant'
+    ) THEN
+        ALTER TABLE products
+            ADD CONSTRAINT fk_products_tenant
+            FOREIGN KEY (tenant_id) REFERENCES tenants(id);
+    END IF;
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conrelid = 'sales'::regclass
+          AND conname = 'fk_sales_tenant'
+    ) THEN
+        ALTER TABLE sales
+            ADD CONSTRAINT fk_sales_tenant
+            FOREIGN KEY (tenant_id) REFERENCES tenants(id);
+    END IF;
+END $;
 
 CREATE INDEX IF NOT EXISTS idx_categories_tenant ON categories (tenant_id);
 CREATE INDEX IF NOT EXISTS idx_products_tenant ON products (tenant_id);
