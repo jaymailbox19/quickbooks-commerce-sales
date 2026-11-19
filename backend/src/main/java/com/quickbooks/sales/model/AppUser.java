@@ -21,6 +21,12 @@ public class AppUser {
     protected AppUser() {
     }
 
+    public AppUser(String email, String passwordHash) {
+        this.email = email;
+        this.passwordHash = passwordHash;
+        this.enabled = true;
+    }
+
     public Long getId() {
         return id;
     }
