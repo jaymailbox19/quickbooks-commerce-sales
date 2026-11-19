@@ -4,11 +4,16 @@ import java.util.List;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.core.convert.converter.Converter;
+import org.springframework.security.authentication.AbstractAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -30,11 +35,27 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**"
                         ).permitAll()
-                        .requestMatchers("/api/**").authenticated()
+                        .requestMatchers("/api/auth/workspaces/**")
+                        .hasAuthority("SCOPE_workspace_selection")
+                        .requestMatchers("/api/**")
+                        .hasAuthority("SCOPE_workspace")
                         .anyRequest().permitAll())
                 .oauth2ResourceServer(oauth2 ->
-                        oauth2.jwt(Customizer.withDefaults()));
+                        oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(
+                                workspaceTokenAuthenticationConverter())));
         return http.build();
+    }
+
+    @Bean
+    public Converter<Jwt, ? extends AbstractAuthenticationToken>
+    workspaceTokenAuthenticationConverter() {
+        return jwt -> {
+            String tokenType = jwt.getClaimAsString("token_type");
+            List<SimpleGrantedAuthority> authorities =
+                    tokenType == null ? List.of()
+                            : List.of(new SimpleGrantedAuthority("SCOPE_" + tokenType));
+            return new JwtAuthenticationToken(jwt, authorities);
+        };
     }
 
     @Bean
