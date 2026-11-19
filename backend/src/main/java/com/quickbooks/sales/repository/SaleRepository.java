@@ -8,7 +8,6 @@ import org.springframework.data.repository.query.Param;
 import java.time.LocalDate;
 import java.util.List;
 
-
 public interface SaleRepository extends JpaRepository<Sale, Long> {
 
     @Query("""
@@ -16,11 +15,15 @@ public interface SaleRepository extends JpaRepository<Sale, Long> {
             FROM Sale s
             JOIN s.product p
             JOIN p.category c
-            WHERE s.saleDate >= :startDate
+            WHERE s.tenantId = :tenantId
+              AND p.tenantId = :tenantId
+              AND c.tenantId = :tenantId
+              AND s.saleDate >= :startDate
             GROUP BY c.name
             ORDER BY SUM(s.amount) DESC
             """)
     List<Object[]> findSalesByCategory(
+            @Param("tenantId") Long tenantId,
             @Param("startDate") LocalDate startDate);
 
     @Query("""
@@ -28,11 +31,15 @@ public interface SaleRepository extends JpaRepository<Sale, Long> {
             FROM Sale s
             JOIN s.product p
             JOIN p.category c
-            WHERE s.saleDate >= :startDate
+            WHERE s.tenantId = :tenantId
+              AND p.tenantId = :tenantId
+              AND c.tenantId = :tenantId
+              AND s.saleDate >= :startDate
             GROUP BY c.name, s.saleDate
             ORDER BY c.name, s.saleDate
             """)
     List<Object[]> findSalesByCategoryAndDate(
+            @Param("tenantId") Long tenantId,
             @Param("startDate") LocalDate startDate);
 
     @Query("""
@@ -40,30 +47,36 @@ public interface SaleRepository extends JpaRepository<Sale, Long> {
             FROM Sale s
             JOIN s.product p
             JOIN p.category c
-            WHERE s.saleDate >= :startDate
+            WHERE s.tenantId = :tenantId
+              AND p.tenantId = :tenantId
+              AND c.tenantId = :tenantId
+              AND s.saleDate >= :startDate
               AND s.saleDate < :endDate
             GROUP BY c.name, s.saleDate
             ORDER BY c.name, s.saleDate
             """)
     List<Object[]> findSalesByCategoryAndDateBetween(
+            @Param("tenantId") Long tenantId,
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate);
 
     @Query("""
-    SELECT p.id, p.name, c.name, SUM(s.amount), SUM(s.quantity)
-    FROM Sale s
-    JOIN s.product p
-    JOIN p.category c
-    WHERE s.saleDate >= :startDate
-      AND s.saleDate < :endDate
-      AND (:category IS NULL OR c.name = :category)
-    GROUP BY p.id, p.name, c.name
-    ORDER BY SUM(s.amount) DESC
-    """)
+            SELECT p.id, p.name, c.name, SUM(s.amount), SUM(s.quantity)
+            FROM Sale s
+            JOIN s.product p
+            JOIN p.category c
+            WHERE s.tenantId = :tenantId
+              AND p.tenantId = :tenantId
+              AND c.tenantId = :tenantId
+              AND s.saleDate >= :startDate
+              AND s.saleDate < :endDate
+              AND (:category IS NULL OR c.name = :category)
+            GROUP BY p.id, p.name, c.name
+            ORDER BY SUM(s.amount) DESC
+            """)
     List<Object[]> findProductSalesRanking(
+            @Param("tenantId") Long tenantId,
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate,
-            @Param("category") String category
-    );
+            @Param("category") String category);
 }
-
