@@ -1,0 +1,50 @@
+name: Backend CI
+
+on:
+  push:
+    branches:
+      - main
+      - research-hardening/independent-brand
+  pull_request:
+    branches:
+      - main
+      - research-hardening/independent-brand
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: commerce_sales
+          POSTGRES_USER: csfp
+          POSTGRES_PASSWORD: ci-only-password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U csfp -d commerce_sales"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DB_URL: jdbc:postgresql://localhost:5432/commerce_sales
+      DB_USER: csfp
+      DB_PASSWORD: ci-only-password
+      JWT_SECRET: ci-only-signing-secret-with-at-least-32-bytes
+      ML_SERVICE_TOKEN: ci-only-ml-token
+      APP_BOOTSTRAP_ENABLED: "false"
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "24"
+          cache: maven
+          cache-dependency-path: backend/pom.xml
+
+      - name: Build and test backend
+        run: mvn -B -f backend/pom.xml verify
