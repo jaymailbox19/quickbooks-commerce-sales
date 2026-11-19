@@ -21,7 +21,7 @@ public class SalesService {
         this.saleRepository = saleRepository;
     }
 
-    public List<CategorySalesResponse> getSalesByCategory(Period period) {
+    public List<CategorySalesResponse> getSalesByCategory(Long tenantId, Period period) {
 
         LocalDate startDate = switch (period) {
             case WEEK -> LocalDate.now().minusDays(7);
@@ -29,7 +29,7 @@ public class SalesService {
             case YEAR -> LocalDate.now().minusDays(365);
         };
 
-        return saleRepository.findSalesByCategory(startDate)
+        return saleRepository.findSalesByCategory(tenantId, startDate)
                 .stream()
                 .map(row -> new CategorySalesResponse(
                         (String) row[0],
@@ -38,6 +38,7 @@ public class SalesService {
     }
 
     public List<DailyCategorySalesResponse> getDailySalesByCategory(
+            Long tenantId,
             String category,
             LocalDate startDate,
             LocalDate endDate) {
@@ -57,7 +58,7 @@ public class SalesService {
         }
 
         return saleRepository
-                .findSalesByCategoryAndDateBetween(startDate, endDate)
+                .findSalesByCategoryAndDateBetween(tenantId, startDate, endDate)
                 .stream()
                 .filter(row -> category.equals(row[0]))
                 .map(row -> new DailyCategorySalesResponse(
@@ -67,13 +68,15 @@ public class SalesService {
                 .toList();
     }
     public List<CategorySalesResponse> getSalesByCategory(
+            Long tenantId,
             LocalDate startDate,
             LocalDate endDate) {
 
-        return getSalesByCategory(startDate, endDate, null);
+        return getSalesByCategory(tenantId, startDate, endDate, null);
     }
 
     public List<CategorySalesResponse> getSalesByCategory(
+            Long tenantId,
             LocalDate startDate,
             LocalDate endDate,
             String category) {
@@ -117,6 +120,7 @@ public class SalesService {
 
     public List<ProductSalesRanking> getProductSalesRanking(
             LocalDate startDate,
+            Long tenantId,
             LocalDate endDate, String category) {
 
         if (startDate == null || endDate == null) {
@@ -131,6 +135,7 @@ public class SalesService {
 
         List<Object[]> rows =
                 saleRepository.findProductSalesRanking(
+                        tenantId,
                         startDate,
                         endDate.plusDays(1), category);
 
