@@ -39,8 +39,8 @@ public PredictionService(
     this.mlServiceClient = mlServiceClient;
 }
 
-public List<TopCategoryPredictionResponse> predictTopCategories(Period period) {
-    List<CategoryDailySales> dailySales = getDailySales(period);
+public List<TopCategoryPredictionResponse> predictTopCategories(Long tenantId, Period period) {
+    List<CategoryDailySales> dailySales = getDailySales(tenantId, period);
 
     Map<String, Map<LocalDate, BigDecimal>> weeklySales =
         getWeeklySales(dailySales);
@@ -61,7 +61,7 @@ public List<TopCategoryPredictionResponse> predictTopCategories(Period period) {
         .toList();
 }
 
-public Map<String, Map<LocalDate, BigDecimal>> getWeeklySalesForPeriod(
+public Map<String, Map<LocalDate, BigDecimal>> getWeeklySalesForPeriod(Long tenantId,
         Period period) {
 
     List<CategoryDailySales> dailySales = getDailySales(period);
@@ -87,11 +87,11 @@ private Map<String, Map<LocalDate, BigDecimal>> getWeeklySales(
         ));
 }
 
-public List<CategoryDailySales> getDailySales(Period period) {
+public List<CategoryDailySales> getDailySales(Long tenantId, Period period) {
 
     LocalDate startDate = getHistoricalStartDate(period);
 
-    return saleRepository.findSalesByCategoryAndDate(startDate)
+    return saleRepository.findSalesByCategoryAndDate(tenantId, startDate)
             .stream()
             .map(row -> new CategoryDailySales(
                     (String) row[0],
@@ -106,7 +106,7 @@ public List<CategoryDailySales> getDailySales(Period period) {
             Period period) {
 
         List<ForecastRequest.WeeklySales> historicalSales =
-                getHistoricalSales(category, period);
+                getHistoricalSales(tenantId, category, period);
 
         int horizon = getHorizon(period);
 
@@ -141,6 +141,7 @@ public List<CategoryDailySales> getDailySales(Period period) {
             );
 
             return forecastUsingMovingAverage(
+                    tenantId,
                     category,
                     period,
                     historicalSales,
@@ -168,6 +169,7 @@ public List<CategoryDailySales> getDailySales(Period period) {
     }
 
     private CategoryPredictionResponse forecastUsingMovingAverage(
+            Long tenantId,
             String category,
             Period period,
             List<ForecastRequest.WeeklySales> historicalSales,
@@ -255,11 +257,12 @@ public List<CategoryDailySales> getDailySales(Period period) {
                 );
     }
 private List<ForecastRequest.WeeklySales> getHistoricalSales(
+        Long tenantId,
         String category,
         Period period) {
 
     Map<String, Map<LocalDate, BigDecimal>> weeklySales =
-            getWeeklySales(getDailySales(period));
+            getWeeklySales(getDailySales(tenantId, period));
 
     Map<LocalDate, BigDecimal> categorySales =
             weeklySales.get(category);
@@ -305,6 +308,7 @@ private List<WeeklyActual> createHistoricalActuals(
 }
 
 private List<ProductForecast> calculateProductForecasts(
+        Long tenantId,
         String category,
         Period period,
         LocalDate historicalThroughDate,
@@ -312,6 +316,7 @@ private List<ProductForecast> calculateProductForecasts(
 
     List<ProductSalesRanking> productRankings =
             getProductSalesRankings(
+                    tenantId,
                     category,
                     period,
                     historicalThroughDate
@@ -337,11 +342,13 @@ private List<ProductForecast> calculateProductForecasts(
 }
 
 private List<ProductSalesRanking> getProductSalesRankings(
+        Long tenantId,
         String category,
         Period period,
         LocalDate historicalThroughDate) {
 
     return saleRepository.findProductSalesRanking(
+                    tenantId,
                     getHistoricalStartDate(period),
                     historicalThroughDate.plusDays(7),
                     category
@@ -391,9 +398,9 @@ private ProductForecast createProductForecast(
     );
 }
 
-public List<BacktestResult> runBacktest() {
+public List<BacktestResult> runBacktest(Long tenantId) {
 
-    List<CategoryDailySales> dailySales = getDailySales(Period.WEEK);
+    List<CategoryDailySales> dailySales = getDailySales(tenantId, Period.WEEK);
 
     Map<String, Map<LocalDate, BigDecimal>> weeklySales =
             getWeeklySales(dailySales);
@@ -440,10 +447,10 @@ public List<BacktestResult> runBacktest() {
     return results;
 }
 
-public List<BacktestResult> runXgboostBacktest() {
+public List<BacktestResult> runXgboostBacktest(Long tenantId) {
 
         List<CategoryDailySales> allDailySales =
-                getDailySales(Period.YEAR);
+                getDailySales(tenantId, Period.YEAR);
 
         Map<String, Map<LocalDate, BigDecimal>> weeklySales =
                 getWeeklySales(allDailySales);
@@ -467,6 +474,7 @@ public List<BacktestResult> runXgboostBacktest() {
                 List<CategoryDailySales> historicalDailySales =
                         saleRepository
                                 .findSalesByCategoryAndDateBetween(
+                                        tenantId,
                                         predictionWeek.minusYears(BACKTEST_HISTORY_YEARS),
                                         predictionWeek)
                                 .stream()
@@ -495,7 +503,7 @@ public List<BacktestResult> runXgboostBacktest() {
                 }
 
                 ForecastRequest request =
-                        new ForecastRequest(1L,category, history, 1);
+                        new ForecastRequest(tenantId, category, history, 1);
 
                 BigDecimal predictedSales =
                         mlServiceClient.forecast(request).predictedSales();
@@ -521,10 +529,10 @@ public List<BacktestResult> runXgboostBacktest() {
         return results;
     }
 
-    public List<BacktestComparisonResult> compareBacktests() {
+    public List<BacktestComparisonResult> compareBacktests(Long tenantId) {
 
-        List<BacktestResult> movingAverageResults = runBacktest();
-        List<BacktestResult> xgboostResults = runXgboostBacktest();
+        List<BacktestResult> movingAverageResults = runBacktest(tenantId);
+        List<BacktestResult> xgboostResults = runXgboostBacktest(tenantId);
 
         Map<String, BacktestResult> xgboostByKey =
                 xgboostResults.stream()
