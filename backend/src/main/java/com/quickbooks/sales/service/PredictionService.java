@@ -64,7 +64,7 @@ public List<TopCategoryPredictionResponse> predictTopCategories(Long tenantId, P
 public Map<String, Map<LocalDate, BigDecimal>> getWeeklySalesForPeriod(Long tenantId,
         Period period) {
 
-    List<CategoryDailySales> dailySales = getDailySales(period);
+    List<CategoryDailySales> dailySales = getDailySales(tenantId, period);
 
     return getWeeklySales(dailySales);
 }
@@ -152,6 +152,7 @@ public List<CategoryDailySales> getDailySales(Long tenantId, Period period) {
 
         List<ProductForecast> productForecasts =
                 calculateProductForecasts(
+                        tenantId,
                         category,
                         period,
                         historicalThroughDate,
@@ -216,6 +217,7 @@ public List<CategoryDailySales> getDailySales(Long tenantId, Period period) {
 
         List<ProductForecast> productForecasts =
                 calculateProductForecasts(
+                        tenantId,
                         category,
                         period,
                         historicalThroughDate,
@@ -566,6 +568,10 @@ public List<BacktestResult> runXgboostBacktest(Long tenantId) {
                 .toList();
     }
 public BigDecimal calculateMAE(List<BacktestResult> results) {
+
+    if (results == null || results.isEmpty()) {
+        throw new IllegalArgumentException("Cannot calculate MAE without backtest results");
+    }
 
     return results.stream()
             .map(BacktestResult::absoluteError)
