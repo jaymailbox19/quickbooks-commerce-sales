@@ -1,6 +1,6 @@
 -- Optional demonstration data for the Demo Tenant.
 -- Run manually only after the application migrations have completed:
---   psql "$DB_URL" -v ON_ERROR_STOP=1 -f database/demo_seed.sql
+--   PGHOST="$DB_HOST" PGPORT="$DB_PORT" PGDATABASE="$DB_NAME" \\\n--   PGUSER="$DB_USER" PGPASSWORD="$DB_PASSWORD" \\\n--   psql -v ON_ERROR_STOP=1 -f database/demo_seed.sql
 -- This file is deliberately not loaded automatically by Spring Boot.
 
 BEGIN;
