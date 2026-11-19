@@ -92,7 +92,7 @@ public class SalesService {
         }
 
         return saleRepository
-                .findSalesByCategoryAndDateBetween(startDate, endDate)
+                .findSalesByCategoryAndDateBetween(tenantId, startDate, endDate)
                 .stream()
                 .filter(row ->
                         category == null
@@ -119,8 +119,8 @@ public class SalesService {
     }
 
     public List<ProductSalesRanking> getProductSalesRanking(
-            LocalDate startDate,
             Long tenantId,
+            LocalDate startDate,
             LocalDate endDate, String category) {
 
         if (startDate == null || endDate == null) {
