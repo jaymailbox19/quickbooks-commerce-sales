@@ -30,6 +30,12 @@ public class TenantMembership {
     protected TenantMembership() {
     }
 
+    public TenantMembership(AppUser user, Tenant tenant, TenantRole role) {
+        this.user = user;
+        this.tenant = tenant;
+        this.role = role;
+    }
+
     public Long getId() {
         return id;
     }
