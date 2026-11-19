@@ -16,7 +16,6 @@ import com.nimbusds.jose.jwk.source.ImmutableSecret;
 
 @Service
 public class JwtService {
-
     private final JwtEncoder jwtEncoder;
 
     public JwtService(@Value("${app.jwt.secret}") String secret) {
@@ -25,19 +24,36 @@ public class JwtService {
         );
     }
 
-    public String generateToken(String username) {
+    public String generateWorkspaceSelectionToken(Long userId, String email) {
         Instant now = Instant.now();
-
         JwtClaimsSet claims = JwtClaimsSet.builder()
-                .subject(username)
+                .subject(userId.toString())
+                .claim("email", email)
+                .claim("token_type", "workspace_selection")
+                .issuedAt(now)
+                .expiresAt(now.plus(5, ChronoUnit.MINUTES))
+                .build();
+        return encode(claims);
+    }
+
+    public String generateActiveWorkspaceToken(
+            Long userId, String email, Long tenantId, String role) {
+        Instant now = Instant.now();
+        JwtClaimsSet claims = JwtClaimsSet.builder()
+                .subject(userId.toString())
+                .claim("email", email)
+                .claim("tenant_id", tenantId)
+                .claim("role", role)
+                .claim("token_type", "workspace")
                 .issuedAt(now)
                 .expiresAt(now.plus(1, ChronoUnit.HOURS))
                 .build();
+        return encode(claims);
+    }
 
+    private String encode(JwtClaimsSet claims) {
         JwsHeader header = JwsHeader.with(MacAlgorithm.HS256).build();
-
-        return jwtEncoder.encode(
-                JwtEncoderParameters.from(header, claims)
-        ).getTokenValue();
+        return jwtEncoder.encode(JwtEncoderParameters.from(header, claims))
+                .getTokenValue();
     }
 }
