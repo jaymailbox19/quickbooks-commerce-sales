@@ -84,7 +84,7 @@ WHERE s.product_id = p.id
   AND s.tenant_id IS NULL;
 
 -- Fail closed rather than silently assigning orphaned records to a tenant.
-DO $$
+DO $csfp$
 BEGIN
     IF EXISTS (SELECT 1 FROM categories WHERE tenant_id IS NULL) THEN
         RAISE EXCEPTION 'Tenant migration stopped: category rows remain without tenant_id';
@@ -95,7 +95,7 @@ BEGIN
     IF EXISTS (SELECT 1 FROM sales WHERE tenant_id IS NULL) THEN
         RAISE EXCEPTION 'Tenant migration stopped: sales rows remain without tenant_id';
     END IF;
-END $$;
+END $csfp$;
 
 ALTER TABLE categories ALTER COLUMN tenant_id SET NOT NULL;
 ALTER TABLE products ALTER COLUMN tenant_id SET NOT NULL;
@@ -103,7 +103,7 @@ ALTER TABLE sales ALTER COLUMN tenant_id SET NOT NULL;
 
 -- Remove the old global category-name uniqueness rule, if present. Names are
 -- unique within a business, not across all businesses.
-DO $$
+DO $csfp$
 DECLARE constraint_name TEXT;
 BEGIN
     FOR constraint_name IN
@@ -115,7 +115,7 @@ BEGIN
     LOOP
         EXECUTE format('ALTER TABLE categories DROP CONSTRAINT %I', constraint_name);
     END LOOP;
-END $$;
+END $csfp$;
 
 CREATE UNIQUE INDEX IF NOT EXISTS uk_categories_tenant_id_id
     ON categories (tenant_id, id);
@@ -128,7 +128,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS uk_products_tenant_name
 
 -- Composite foreign keys prevent a product from referencing another
 -- business's category and a sale from referencing another business's product.
-DO $$
+DO $csfp$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_products_tenant_category') THEN
         ALTER TABLE products
@@ -142,7 +142,7 @@ BEGIN
             FOREIGN KEY (tenant_id, product_id)
             REFERENCES products (tenant_id, id);
     END IF;
-END $$;
+END $csfp$;
 
 DO $csfp$
 BEGIN
